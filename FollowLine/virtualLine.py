@@ -18,7 +18,8 @@ def followLine(clientID):
     d = 0.0944
     l = 0.322
     r = 0.04
-    Kp = 0
+    prevDirection = 0
+    Kp = 0.01
     Ki = 0
     Kd = 0
     error = 0
@@ -91,79 +92,109 @@ def followLine(clientID):
 #     Until simulation closes run script
 # =============================================================================
     while vrep.simxGetConnectionId(clientID) != -1:
-# =============================================================================
-#      Read sensors detecting the line
-# =============================================================================
-        returnCode, resolution, image = vrep.simxGetVisionSensorImage(clientID, camera, 0, vrep.simx_opmode_buffer)
-        if returnCode == vrep.simx_return_ok:
-            cols = resolution[0]
-            rows = resolution[1]
-            imageByteArray = bytes(array.array('b', image))
-            imageBuffer = I.frombuffer("RGB", (cols,rows ), imageByteArray, "raw", "RGB", 0, 1)
-            img2 = np.asarray(imageBuffer)
-            img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
-            img2 = cv2.blur(img2, (3,3))
-            img2 = cv2.Canny(img2, 45, 100)
-            center = int(cols/2)
-            left = 0
-            right = 0
-            middle = center;
-            mean = 0
-            minPx = 40
-            maxPx = 60
-            for jdx in range(minPx, maxPx+1):
-                if img2[jdx, middle] == 0:
-                    for idx in range(middle, cols, 1):
-                        if img2[jdx, idx] == 255 or idx == cols-1:
-                            right = idx
-                            break
-                    for idx in range(middle-1, -1, -1):
-                        if img2[jdx, idx] == 255 or idx == 0:
-                            left = idx
-                            break
-                middle = int(round(right+(left-right)*0.5))
-                mean += middle
-                img2[jdx, middle] = 255
-            middle = mean/(maxPx-minPx)
-            error = center-middle
-            print(error)
-            
-            plt.imshow(img2, cmap = "viridis", origin = "lower")
-            plt.show()
-        elif returnCode == vrep.simx_return_novalue_flag:
-            print('No data yet')
-            pass
-        else:
-            sys.exit('Could not get image')
+        objectLeft, distanceLeft = detectObject(clientID, laserLeft)
+        objectMiddle, distanceMiddle = detectObject(clientID, laserMiddle)
+        objectRight, distanceRight = detectObject(clientID, laserRight)
+        
+        if objectLeft or objectMiddle or objectRight:
+            if objectLeft and objectRight:
+                if prevDirection == 0:
+                    e = 0.183*3
+                    prevDirection = 1
+                else:
+                    e = -0.183*3
+                    prevDirection = 0
+                distance = (distanceLeft+distanceRight)/2
+            elif objectMiddle:
+                e = -0.0915*2
+                distance = distanceMiddle
+            elif objectLeft:
+                e = -0.0915*2
+                distance = distanceLeft
+            elif objectRight:
+                e = 0.0915*2
+                distance = distanceRight
+            print(distance)
+            desiredSteeringAngle = np.arctan(e/distance)
+            steeringAngleLeft = np.arctan(l/(-d+l/np.tan(desiredSteeringAngle)))
+            steeringAngleRight = np.arctan(l/(d+l/np.tan(desiredSteeringAngle)))
+            returnCode = vrep.simxSetJointTargetPosition(clientID, steeringLeft, steeringAngleLeft, vrep.simx_opmode_streaming)
+            returnCode = vrep.simxSetJointTargetPosition(clientID, steeringRight, steeringAngleRight, vrep.simx_opmode_streaming)    
+            returnCode = vrep.simxSetJointTargetVelocity(clientID, motorLeft, desiredSpeed, vrep.simx_opmode_streaming)
+            returnCode = vrep.simxSetJointTargetVelocity(clientID, motorRight, desiredSpeed, vrep.simx_opmode_streaming)
+            time.sleep(dt)
+
+        else: #Run follow line behaviour
+            returnCode, resolution, image = vrep.simxGetVisionSensorImage(clientID, camera, 0, vrep.simx_opmode_buffer)
+            if returnCode == vrep.simx_return_ok:
+                cols = resolution[0]
+                rows = resolution[1]
+                imageByteArray = bytes(array.array('b', image))
+                imageBuffer = I.frombuffer("RGB", (cols,rows ), imageByteArray, "raw", "RGB", 0, 1)
+                img2 = np.asarray(imageBuffer)
+                img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
+                img2 = cv2.blur(img2, (3,3))
+                img2 = cv2.Canny(img2, 45, 100)
+                center = int(cols/2)
+                left = 0
+                right = 0
+                middle = center;
+                mean = 0
+                minPx = 20
+                maxPx = 45
+                for jdx in range(minPx, maxPx+1):
+                    if img2[jdx, middle] == 0:
+                        for idx in range(middle, cols, 1):
+                            if img2[jdx, idx] == 255 or idx == cols-1:
+                                right = idx
+                                break
+                        for idx in range(middle-1, -1, -1):
+                            if img2[jdx, idx] == 255 or idx == 0:
+                                left = idx
+                                break
+                    middle = int(round(right+(left-right)*0.5))
+                    mean += middle
+                    img2[jdx, middle] = 255
+                middle = mean/(maxPx-minPx)
+                error = center-middle
+                print(error)
+                
+                plt.imshow(img2, cmap = "viridis", origin = "lower")
+                plt.show()
+            elif returnCode == vrep.simx_return_novalue_flag:
+                print('No data yet')
+                pass
+            else:
+                sys.exit('Could not get image')
 # =============================================================================
 #       Set integral and derivative term
 # =============================================================================
-        integral = integral+error*dt
-        derivative = (error-prevError)/dt
+            integral = integral+error*dt
+            derivative = (error-prevError)/dt
 # =============================================================================
 #       PID controller
 # =============================================================================
 # =============================================================================
-#         desiredSpeed = maxSpeed - 3*np.absolute((Kp*error+Ki*integral+Kd*derivative))
+#           desiredSpeed = maxSpeed - 3*np.absolute((Kp*error+Ki*integral+Kd*derivative))
 # =============================================================================
-        desiredSteeringAngle = Kp*error+Ki*integral+Kd*derivative
-        if desiredSteeringAngle > maxSteeringAngle:
-            desiredSteeringAngle = maxSteeringAngle
-        elif desiredSteeringAngle < minSteeringAngle:
-            desiredSteeringAngle = minSteeringAngle
-        prevError = error
+            desiredSteeringAngle = Kp*error+Ki*integral+Kd*derivative
+            if desiredSteeringAngle > maxSteeringAngle:
+                desiredSteeringAngle = maxSteeringAngle
+            elif desiredSteeringAngle < minSteeringAngle:
+                desiredSteeringAngle = minSteeringAngle
+            prevError = error
 # =============================================================================
 #       Set steering angle
 # =============================================================================
-        print('Desired Steering Angle', desiredSteeringAngle)
-        steeringAngleLeft = np.arctan(l/(-d+l/np.tan(desiredSteeringAngle)))
-        steeringAngleRight = np.arctan(l/(d+l/np.tan(desiredSteeringAngle)))
-
-        returnCode = vrep.simxSetJointTargetPosition(clientID, steeringLeft, steeringAngleLeft, vrep.simx_opmode_streaming)
-        returnCode = vrep.simxSetJointTargetPosition(clientID, steeringRight, steeringAngleRight, vrep.simx_opmode_streaming)    
-        returnCode = vrep.simxSetJointTargetVelocity(clientID, motorLeft, desiredSpeed, vrep.simx_opmode_streaming)
-        returnCode = vrep.simxSetJointTargetVelocity(clientID, motorRight, desiredSpeed, vrep.simx_opmode_streaming)
-        time.sleep(dt)
+            print('Desired Steering Angle', desiredSteeringAngle)
+            steeringAngleLeft = np.arctan(l/(-d+l/np.tan(desiredSteeringAngle)))
+            steeringAngleRight = np.arctan(l/(d+l/np.tan(desiredSteeringAngle)))
+    
+            returnCode = vrep.simxSetJointTargetPosition(clientID, steeringLeft, steeringAngleLeft, vrep.simx_opmode_streaming)
+            returnCode = vrep.simxSetJointTargetPosition(clientID, steeringRight, steeringAngleRight, vrep.simx_opmode_streaming)    
+            returnCode = vrep.simxSetJointTargetVelocity(clientID, motorLeft, desiredSpeed, vrep.simx_opmode_streaming)
+            returnCode = vrep.simxSetJointTargetVelocity(clientID, motorRight, desiredSpeed, vrep.simx_opmode_streaming)
+            time.sleep(dt)
     print('End of simulation')
 
     
