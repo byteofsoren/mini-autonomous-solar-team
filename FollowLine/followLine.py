@@ -12,6 +12,9 @@ def followLine(clientID):
 # =============================================================================
 #     Initialize constants and variables
 # =============================================================================
+    d = 0.0944
+    l = 0.322
+    r = 0.04
     sensorsLeft = [-1, -1, -1, -1]
     sensorsRight = [-1, -1, -1, -1]
     imagesLeft = [-1, -1, -1, -1]
@@ -27,13 +30,12 @@ def followLine(clientID):
     derivative = 0
     dt = 0.05
     desiredSteeringAngle = 0
-    maxSteeringAngle = 30*np.pi/180
+    maxSteeringAngle = 50*np.pi/180
     minSteeringAngle = -1*maxSteeringAngle
     desiredSpeed = 8
     #minSpeed = 0
-    #maxSpeed = 300*np.pi/180
-    d = 0.0944
-    l = 0.322
+    maxSpeed = 8
+    
 # =============================================================================
 #     Initalize handles to motors
 # =============================================================================
@@ -102,68 +104,146 @@ def followLine(clientID):
 #     Until simulation closes run script
 # =============================================================================
     while vrep.simxGetConnectionId(clientID) != -1:
-        desiredSteeringAngle = 0;
 # =============================================================================
 #     Check the proximity sensors to decide the behaviour 
 # =============================================================================
-        objectleft, distanceleft = detectObject(clientID, laserLeft)
-        objecrMiddle, distanceMiddle = detectObject(clientID, laserMiddle)
+        objectLeft, distanceLeft = detectObject(clientID, laserLeft)
+        objectMiddle, distanceMiddle = detectObject(clientID, laserMiddle)
         objectRight, distanceRight = detectObject(clientID, laserRight)
-        
+        if objectLeft or objectMiddle or objectRight:
+            while objectLeft or objectMiddle or objectRight:
+                if objectLeft and objectRight:
+                    e = 0.183*3
+                    distance = (distanceLeft+distanceRight)/2
+                elif objectMiddle:
+                    e = -0.0915*2
+                    distance = distanceMiddle
+                elif objectLeft:
+                    e = -0.0915*2
+                    distance = distanceLeft
+                elif objectRight:
+                    e = 0.0915*2
+                    distance = distanceRight
+                desiredSteeringAngle = np.arctan(e/distance)
+                steeringAngleLeft = np.arctan(l/(-d+l/np.tan(desiredSteeringAngle)))
+                steeringAngleRight = np.arctan(l/(d+l/np.tan(desiredSteeringAngle)))
+                returnCode = vrep.simxSetJointTargetPosition(clientID, steeringLeft, steeringAngleLeft, vrep.simx_opmode_streaming)
+                returnCode = vrep.simxSetJointTargetPosition(clientID, steeringRight, steeringAngleRight, vrep.simx_opmode_streaming)    
+                returnCode = vrep.simxSetJointTargetVelocity(clientID, motorLeft, desiredSpeed, vrep.simx_opmode_streaming)
+                returnCode = vrep.simxSetJointTargetVelocity(clientID, motorRight, desiredSpeed, vrep.simx_opmode_streaming)
+                time.sleep(dt)
+                objectLeft, distanceLeft = detectObject(clientID, laserLeft)
+                objectMiddle, distanceMiddle = detectObject(clientID, laserMiddle)
+                objectRight, distanceRight = detectObject(clientID, laserRight)
+                
+            t = distance/(desiredSpeed*r)
+            iterations = int(np.ceil(t/(2*dt)))
+# =============================================================================
+#             print('Desired Steering Angle', desiredSteeringAngle)
+# =============================================================================
+            for i in range(iterations):
+# =============================================================================
+#                 string = "{} of {}".format(i, iterations)
+#                 print(string)
+# =============================================================================
+                time.sleep(dt)
+                
+            desiredSteeringAngle *= -1
+# =============================================================================
+#             print('Desired Steering Angle', desiredSteeringAngle)
+# =============================================================================
+            steeringAngleLeft = np.arctan(l/(-d+l/np.tan(desiredSteeringAngle)))
+            steeringAngleRight = np.arctan(l/(d+l/np.tan(desiredSteeringAngle)))
+            returnCode = vrep.simxSetJointTargetPosition(clientID, steeringLeft, steeringAngleLeft, vrep.simx_opmode_streaming)
+            returnCode = vrep.simxSetJointTargetPosition(clientID, steeringRight, steeringAngleRight, vrep.simx_opmode_streaming)    
+            returnCode = vrep.simxSetJointTargetVelocity(clientID, motorLeft, desiredSpeed, vrep.simx_opmode_streaming)
+            returnCode = vrep.simxSetJointTargetVelocity(clientID, motorRight, desiredSpeed, vrep.simx_opmode_streaming)
+            for i in range(iterations*2):
+# =============================================================================
+#                 string = "{} of {}".format(i, iterations*2)
+#                 print(string)
+# =============================================================================
+                time.sleep(dt)
+                
+            desiredSteeringAngle *= 1.5
+            print('Desired Steering Angle', desiredSteeringAngle)
+            steeringAngleLeft = np.arctan(l/(-d+l/np.tan(desiredSteeringAngle)))
+            steeringAngleRight = np.arctan(l/(d+l/np.tan(desiredSteeringAngle)))
+            returnCode = vrep.simxSetJointTargetPosition(clientID, steeringLeft, steeringAngleLeft, vrep.simx_opmode_streaming)
+            returnCode = vrep.simxSetJointTargetPosition(clientID, steeringRight, steeringAngleRight, vrep.simx_opmode_streaming)    
+            returnCode = vrep.simxSetJointTargetVelocity(clientID, motorLeft, desiredSpeed, vrep.simx_opmode_streaming)
+            returnCode = vrep.simxSetJointTargetVelocity(clientID, motorRight, desiredSpeed, vrep.simx_opmode_streaming)
+            for i in range(iterations):
+# =============================================================================
+#                 string = "{} of {}".format(i, iterations)
+#                 print(string)
+# =============================================================================
+                time.sleep(dt)
+            
+            integral = 0
+# =============================================================================
+#             for i in range(iterations):
+#                 string = "{} of {}".format(i, iterations)
+#                 print(string)
+#                 time.sleep(dt)
+# =============================================================================
+        else: #Run follow line behaviour
 # =============================================================================
 #     Read sensors detecting the line
 # =============================================================================
-        detectionMiddle = detectLine(clientID, sensorMiddle)
-        for i in range(4):
-            detectionLeft[i] = detectLine(clientID, sensorsLeft[i])
-            detectionRight[i] = detectLine(clientID, sensorsRight[i])
+            detectionMiddle = detectLine(clientID, sensorMiddle)
+            for i in range(4):
+                detectionLeft[i] = detectLine(clientID, sensorsLeft[i])
+                detectionRight[i] = detectLine(clientID, sensorsRight[i])
         
 # =============================================================================
 #         Determine the error based on the sensor values
 # =============================================================================
-        if detectionMiddle:
-            error = 0
-        if detectionLeft[0]:
-            error = 0.015
-        if detectionRight[0]:
-            error = -0.015
-        if detectionLeft[1]:
-            error = 0.03
-        if detectionRight[1]:
-            error = -0.03
-        if detectionLeft[2]:
-            error = 0.045
-        if detectionRight[2]:
-            error = -0.045
-        if detectionLeft[3]:
-            error = 0.06
-        if detectionRight[3]:
-            error = -0.06    
+            if detectionMiddle:
+                error = 0
+            if detectionLeft[0]:
+                error = 0.015
+            if detectionRight[0]:
+                error = -0.015
+            if detectionLeft[1]:
+                error = 0.03
+            if detectionRight[1]:
+                error = -0.03
+            if detectionLeft[2]:
+                error = 0.045
+            if detectionRight[2]:
+                error = -0.045
+            if detectionLeft[3]:
+                error = 0.06
+            if detectionRight[3]:
+                error = -0.06    
 # =============================================================================
 #       Set integral and derivative term
 # =============================================================================
-        integral = integral+error*dt
-        derivative = (error-prevError)/dt
+            integral = integral+error*dt
+            derivative = (error-prevError)/dt
 # =============================================================================
 #       PID controller
 # =============================================================================
-        desiredSteeringAngle = Kp*error+Ki*integral+Kd*derivative
-        if desiredSteeringAngle > maxSteeringAngle:
-            desiredSteeringAngle = maxSteeringAngle
-        elif desiredSteeringAngle < minSteeringAngle:
-            desiredSteeringAngle = minSteeringAngle
-        prevError = error
+            desiredSpeed = maxSpeed - 3*np.absolute((Kp*error+Ki*integral+Kd*derivative))
+            desiredSteeringAngle = Kp*error+Ki*integral+Kd*derivative
+            if desiredSteeringAngle > maxSteeringAngle:
+                desiredSteeringAngle = maxSteeringAngle
+            elif desiredSteeringAngle < minSteeringAngle:
+                desiredSteeringAngle = minSteeringAngle
+            prevError = error
 # =============================================================================
 #       Set steering angle
 # =============================================================================
-        steeringAngleLeft = np.arctan(l/(-d+l/np.tan(desiredSteeringAngle)))
-        steeringAngleRight = np.arctan(l/(d+l/np.tan(desiredSteeringAngle)))
-
-        returnCode = vrep.simxSetJointTargetPosition(clientID, steeringLeft, steeringAngleLeft, vrep.simx_opmode_streaming)
-        returnCode = vrep.simxSetJointTargetPosition(clientID, steeringRight, steeringAngleRight, vrep.simx_opmode_streaming)    
-        returnCode = vrep.simxSetJointTargetVelocity(clientID, motorLeft, desiredSpeed, vrep.simx_opmode_streaming)
-        returnCode = vrep.simxSetJointTargetVelocity(clientID, motorRight, desiredSpeed, vrep.simx_opmode_streaming)
-        time.sleep(dt)
+            print('Desired Speed', desiredSpeed)
+            steeringAngleLeft = np.arctan(l/(-d+l/np.tan(desiredSteeringAngle)))
+            steeringAngleRight = np.arctan(l/(d+l/np.tan(desiredSteeringAngle)))
+    
+            returnCode = vrep.simxSetJointTargetPosition(clientID, steeringLeft, steeringAngleLeft, vrep.simx_opmode_streaming)
+            returnCode = vrep.simxSetJointTargetPosition(clientID, steeringRight, steeringAngleRight, vrep.simx_opmode_streaming)    
+            returnCode = vrep.simxSetJointTargetVelocity(clientID, motorLeft, desiredSpeed, vrep.simx_opmode_streaming)
+            returnCode = vrep.simxSetJointTargetVelocity(clientID, motorRight, desiredSpeed, vrep.simx_opmode_streaming)
+            time.sleep(dt)
     print('End of simulation')
 
 
@@ -182,10 +262,10 @@ def detectLine(clientID, sensorHandle):
 def detectObject(clientID, sensorHandle):
     returnCode, detectionState, detectedPoint, detectedObjectHandle, detectedSurfaceNormalVector = vrep.simxReadProximitySensor(clientID, sensorHandle, vrep.simx_opmode_buffer)
     if returnCode == vrep.simx_return_ok:
-        return detectionState, detectedPoint
+        return detectionState, detectedPoint[2]
     elif returnCode == vrep.simx_return_novalue_flag:
         print('No value distance value yet')
-        return False, [-1, -1, -1]
+        return False, -1
     else:
         sys.exit('Could not get distance reading')
     
