@@ -7,3 +7,6 @@
 [submodule "src/camera_pub"]
 	path = src/camera_pub
 	url = https://github.com/byteofsoren/MAST-ros-image-publisher.git
+[submodule "src/distance_sensor"]
+	path = src/distance_sensor
+	url = https://github.com/sebbelastian/MAST-Distance_sensor.git
