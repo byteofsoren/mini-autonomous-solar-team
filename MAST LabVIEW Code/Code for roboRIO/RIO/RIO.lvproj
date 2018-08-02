@@ -94,6 +94,8 @@ AddOutputFilter chunkFilter
 		<Property Name="target.webservices.ValidTimestampWindow" Type="Int">15</Property>
 		<Item Name="Messages" Type="Folder">
 			<Item Name="add_from_rio.vi" Type="VI" URL="../add_from_rio.vi"/>
+			<Item Name="add_speed_is.vi" Type="VI" URL="../add_speed_is.vi"/>
+			<Item Name="add_steering_is.vi" Type="VI" URL="../add_steering_is.vi"/>
 			<Item Name="parse_to_rio.vi" Type="VI" URL="../parse_to_rio.vi"/>
 		</Item>
 		<Item Name="ROS for LabVIEW Software" Type="Folder">
@@ -2457,6 +2459,7 @@ AddOutputFilter chunkFilter
 			</Item>
 		</Item>
 		<Item Name="main.vi" Type="VI" URL="../main.vi"/>
+		<Item Name="smallCarTemp.vi" Type="VI" URL="../smallCarTemp.vi"/>
 		<Item Name="Dependencies" Type="Dependencies">
 			<Item Name="user.lib" Type="Folder">
 				<Item Name="ROSTerminal.vi" Type="VI" URL="/&lt;userlib&gt;/ROS for LabVIEW Software/ROS/Code/ROS_Tools/ROSTerminal.vi"/>
