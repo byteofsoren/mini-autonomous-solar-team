@@ -7,3 +7,9 @@
 [submodule "src/distance_sensor"]
 	path = src/distance_sensor
 	url = https://github.com/sebbelastian/MAST-Distance_sensor.git
+[submodule "src/cannylive"]
+	path = src/cannylive
+	url = https://github.com/bob-ROS/cannylive.git
+[submodule "src/gps"]
+	path = src/gps
+	url = https://github.com/swri-robotics/gps_umd.git
