@@ -1,5 +1,5 @@
 Authour: Ulrik Åkesson
-Date: 2018-07-30
+Date: 2018-07-31
 
 Summary:
 The main interface between the host computer and the nvidia TX2,
@@ -7,6 +7,11 @@ which hosts the roboRIO.
 
 Since the roboRIO is hidden behind the TX2 webinterface the idea is to use
 a buffer node at the TX2 for cross communication.
+
+Topics:
+    vehicle_settings
+    vehicle_status
+    emegency_stop_external
 
 Messages:
     vehicle_settings:

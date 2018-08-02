@@ -912,6 +912,10 @@ AddOutputFilter chunkFilter
 			<Item Name="README.txt" Type="Document" URL="/&lt;userlib&gt;/ROS for LabVIEW Software/README.txt"/>
 			<Item Name="ROS for LabVIEW Software License.txt" Type="Document" URL="/&lt;userlib&gt;/ROS for LabVIEW Software/ROS for LabVIEW Software License.txt"/>
 		</Item>
+		<Item Name="Sub VIs" Type="Folder">
+			<Item Name="angle2DutyCycle.vi" Type="VI" URL="../angle2DutyCycle.vi"/>
+			<Item Name="RPM2DutyCycle.vi" Type="VI" URL="../RPM2DutyCycle.vi"/>
+		</Item>
 		<Item Name="Chassis" Type="roboRIO Chassis">
 			<Property Name="crio.ProgrammingMode" Type="Str">fpga</Property>
 			<Property Name="crio.ResourceID" Type="Str">RIO0</Property>
