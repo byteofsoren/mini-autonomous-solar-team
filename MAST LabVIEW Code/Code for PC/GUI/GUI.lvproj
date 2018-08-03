@@ -15,6 +15,7 @@
 		</Item>
 		<Item Name="Parsing" Type="Folder">
 			<Item Name="parse_distance.vi" Type="VI" URL="../parse_distance.vi"/>
+			<Item Name="parse_speed_is.vi" Type="VI" URL="../parse_speed_is.vi"/>
 			<Item Name="parse_steering_is.vi" Type="VI" URL="../parse_steering_is.vi"/>
 			<Item Name="parse_vehicle_status.vi" Type="VI" URL="../parse_vehicle_status.vi"/>
 		</Item>
@@ -69,9 +70,6 @@
 				<Item Name="parse_time.vi" Type="VI" URL="/&lt;userlib&gt;/ROS for LabVIEW Software/ROS/MessageParsing/std_msgs/parse_time.vi"/>
 				<Item Name="parse_time_array.vi" Type="VI" URL="/&lt;userlib&gt;/ROS for LabVIEW Software/ROS/MessageParsing/std_msgs/subs/parse_time_array.vi"/>
 				<Item Name="parse_time_scalar.vi" Type="VI" URL="/&lt;userlib&gt;/ROS for LabVIEW Software/ROS/MessageParsing/std_msgs/subs/parse_time_scalar.vi"/>
-				<Item Name="parse_u64_array.vi" Type="VI" URL="/&lt;userlib&gt;/ROS for LabVIEW Software/ROS/MessageParsing/std_msgs/subs/parse_u64_array.vi"/>
-				<Item Name="parse_u64_scalar.vi" Type="VI" URL="/&lt;userlib&gt;/ROS for LabVIEW Software/ROS/MessageParsing/std_msgs/subs/parse_u64_scalar.vi"/>
-				<Item Name="parse_uint64.vi" Type="VI" URL="/&lt;userlib&gt;/ROS for LabVIEW Software/ROS/MessageParsing/std_msgs/parse_uint64.vi"/>
 				<Item Name="parseErrorCheck.vi" Type="VI" URL="/&lt;userlib&gt;/ROS for LabVIEW Software/ROS/MessageParsing/subs/parseErrorCheck.vi"/>
 				<Item Name="prependLength.vi" Type="VI" URL="/&lt;userlib&gt;/ROS for LabVIEW Software/ROS/MessageBuilding/prependLength.vi"/>
 				<Item Name="RedefineMasterIP.vi" Type="VI" URL="/&lt;userlib&gt;/ROS for LabVIEW Software/ROS/Code/SubVIs/RedefineMasterIP.vi"/>
