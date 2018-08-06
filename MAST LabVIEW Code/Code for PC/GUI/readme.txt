@@ -30,4 +30,4 @@ Messages:
        time time_frame
        uint64 delta_tx2_rio
     vehicle_emergency_stop:
-       uint8 emergency_stop = 0 
+       int8 emergency_stop = 0 
