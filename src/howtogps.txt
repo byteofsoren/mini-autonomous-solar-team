@@ -1,0 +1,6 @@
+sudo gpsd -N -S 1111 /dev/ttyUSB0
+sudo gpsmon localhost:1111
+#gpsmon is used for debugging, just prints gps data.
+roscore
+rosrun gpsd_client gpsd_client _host:=localhost _port:=1111
+#should publish on topic /fix
